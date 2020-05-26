@@ -1,81 +1,75 @@
 <?php
-/**
- * This script initiates a video conference session, calling the BigBlueButton API.
- * @package chamilo.plugin.bigbluebutton
- */
+/* License: see /license.txt */
+// Needed in order to show the plugin title
+$strings['plugin_title'] = "Videoconferencia";
+$strings['plugin_comment'] = "Añade una sala de videoconferencia en los cursos de Chamilo con BigBlueButton (BBB)";
 
-$course_plugin = 'bbb'; //needed in order to load the plugin lang variables
-require_once __DIR__.'/config.php';
+$strings['Videoconference'] = "Videoconferencia";
+$strings['MeetingOpened'] = "Sala abierta";
+$strings['MeetingClosed'] = "Sala cerrada";
+$strings['MeetingClosedComment'] = "Si ha pedido grabar la sesión de videoconferencia en los parámetros del curso, esta grabación aparecerá en la lista siguiente una vez generada.";
+$strings['CloseMeeting'] = "Cerrar sala";
+$strings['RoomExit'] = "Ha salido de la sesión de Videoconferencia";
 
-$plugin = BBBPlugin::create();
-$meetingTable = Database::get_main_table('plugin_bbb_meeting');
-$roomTable = Database::get_main_table('plugin_bbb_room');
+$strings['VideoConferenceXCourseX'] = "Videoconferencia #%s, curso %s";
+$strings['VideoConferenceAddedToTheCalendar'] = "Videoconferencia añadida al calendario";
+$strings['VideoConferenceAddedToTheLinkTool'] = "Videoconferencia añadida como enlace. Puede editar y publicar el enlace en la página principal del curso desde la herramienta de enlace.";
 
-$bbb = new bbb();
-if ($bbb->pluginEnabled) {
-    $activeSessions = $bbb->getActiveSessions();
+$strings['GoToTheVideoConference'] = "Ir a la videoconferencia";
 
-    if (!empty($activeSessions)) {
-        foreach ($activeSessions as $value) {
-            $meetingId = $value['id'];
+$strings['Records'] = "Grabación";
+$strings['Meeting'] = "Sala de conferencia";
 
-            $courseInfo = api_get_course_info_by_id($value['c_id']);
-            $courseCode = $courseInfo['code'];
+$strings['ViewRecord'] = "Ver grabación";
+$strings['CopyToLinkTool'] = "Añadir como enlace del curso";
 
-            $meetingBBB = $bbb->getMeetingInfo(
-                [
-                    'meetingId' => $value['remote_id'],
-                    'password' => $value['moderator_pw'],
-                ]
-            );
+$strings['EnterConference'] = "Entrar a la videoconferencia";
+$strings['RecordList'] = "Lista de grabaciones";
+$strings['ServerIsNotRunning'] = "El servidor de videoconferencia no está funcionando";
+$strings['ServerIsNotConfigured'] = "El servidor de videoconferencia no está configurado correctamente";
 
-            if ($meetingBBB === false) {
-                //checking with the remote_id didn't work, so just in case and
-                // to provide backwards support, check with the id
-                $params = [
-                    'meetingId' => $value['id'],
-                    'password' => $value['moderator_pw'],
-                ];
-                $meetingBBB = $bbb->getMeetingInfo($params);
-            }
+$strings['XUsersOnLine'] = "%s usuario(s) en la sala";
 
-            if (!empty($meetingBBB)) {
-                if (isset($meetingBBB['returncode'])) {
-                    $action = (string) $meetingBBB['returncode'];
-                    switch ($action) {
-                        case 'FAILED':
-                            $bbb->endMeeting($value['id'], $courseCode);
-                            break;
-                        case 'SUCCESS':
-                            $i = 0;
-                            while ($i < $meetingBBB['participantCount']) {
-                                $participantId = $meetingBBB[$i]['userId'];
-                                $roomData = Database::select(
-                                    '*',
-                                    $roomTable,
-                                    [
-                                        'where' => [
-                                            'meeting_id = ? AND participant_id = ?' => [$meetingId, $participantId],
-                                        ],
-                                        'order' => 'id DESC',
-                                    ],
-                                    'first'
-                                );
-                                if (!empty($roomData)) {
-                                    $roomId = $roomData['id'];
-                                    Database::update(
-                                        $roomTable,
-                                        ['out_at' => api_get_utc_datetime()],
-                                        ['id = ? ' => $roomId]
-                                    );
-                                }
-                                $i++;
-                            }
-                            break;
-                    }
-                }
-            }
-        }
-    }
-}
-?>
+$strings['host'] = 'Host de BigBlueButton';
+$strings['host_help'] = 'Este es el nombre del servidor donde su servidor BigBlueButton está corriendo. Puede ser localhost, una dirección IP (ej: http://192.168.13.54) o un nombre de dominio (ej: http://mi.video.com).';
+
+$strings['salt'] = 'Clave BigBlueButton';
+$strings['salt_help'] = 'Esta es la llave de seguridad de su servidor BigBlueButton (llamada "salt" en inglés), que permitirá a su servidor de autentifica la instalación de Chamilo (como autorizada). Refiérese a la documentación de BigBlueButton para ubicarla, o use el comando "bbb-conf --salt" si tiene acceso al servidor en línea de comando.';
+
+$strings['tool_enable'] = 'Herramienta de videoconferencia BigBlueButton activada';
+$strings['tool_enable_help'] = "Escoja si desea activar la herramienta de videoconferencia BigBlueButton.
+    Una vez activada, se mostrará como una herramienta adicional en todas las páginas principales de cursos, y los profesores podrán iniciar una conferencia en cualquier momento. Los estudiantes no podrían lanzar una conferencia, solo juntarse a una existente. Si no tiene un servidor de videoconferencia BigBlueButton, por favor <a target=\"_blank\" href=\"http://bigbluebutton.org/\">configure uno</a> antes de seguir, o pida una cotización a uno de los proveedores oficiales de Chamilo. BigBlueButton es una herramienta de software libre (y gratuita), pero su instalación requiere de competencias que quizás no sean inmediatamente disponibles para todos. Puede instalarla usted mismo o buscar ayuda profesional. Esta ayuda podría no obstante generar algunos costos (por lo menos el tiempo de la persona quien lo ayude). En el puro espíritu del software libre, le ofrecemos las herramientas para hacer su trabajo más simple, en la medida de nuestras posibilidades, y le recomendamos profesionales (los proveedores oficiales de Chamilo) para ayudarlo en caso esto fuera demasiado complicado.<br />";
+
+$strings['big_blue_button_welcome_message'] = 'Mensaje de bienvenida de BigBlueButton';
+$strings['enable_global_conference'] = 'Activar la conferencia global';
+$strings['enable_global_conference_per_user'] = 'Activar la conferencia global por usuario';
+$strings['enable_conference_in_course_groups'] = 'Activar las conferencias en grupos';
+$strings['enable_global_conference_link'] = 'Actvivar el enlace hacia la conferencia global desde la página principal';
+
+$strings['big_blue_button_record_and_store'] = 'Grabar las sesiones de videoconferencia.';
+$strings['bbb_enable_conference_in_groups'] = 'Activar la creación de videoconferencia en los grupos.';
+$strings['plugin_tool_bbb'] = 'Videoconferencia';
+$strings['ThereAreNotRecordingsForTheMeetings'] = 'No hay grabaciones de sesiones de videoconferencia';
+$strings['NoRecording'] = 'No hay grabación';
+$strings['ClickToContinue'] = 'Hacer click para continuar';
+$strings['NoGroup'] = 'No hay grupo';
+$strings['UrlMeetingToShare'] = 'URL a compartir';
+
+$strings['AdminView'] = 'Vista para administradores';
+$strings['max_users_limit'] = 'Cantidad máxima de usuarios';
+$strings['max_users_limit_help'] = 'Este valor indica la cantidad máxima de usuarios simultáneos en una conferencia en un curso o curso-sesión. Dejar vacío o en 0 para no poner límite.';
+$strings['MaxXUsersWarning'] = 'Esta sala de conferencia es limitada a un máximo de %s usuarios simultáneos.';
+$strings['MaxXUsersReached'] = 'El límite de %s usuarios simultáneos ha sido alcanzado en esta sala de conferencia. Por favor refresque la página en unos minutos para ver si un asiento se ha liberado, o espere la apertura de una nueva sala para poder participar.';
+$strings['MaxXUsersReachedManager'] = 'El límite de %s usuarios simultáneos ha sido alcanzado en esta sala de conferencia. Para aumentar el límite, contáctese con el administrador del portal.';
+$strings['MaxUsersInConferenceRoom'] = 'Número máximo de usuarios simultáneos en una sala de conferencia';
+$strings['global_conference_allow_roles'] = 'El enlace para la videoconferencia ';
+$strings['CreatedAt'] = 'Creado el';
+
+$strings['interface'] = 'Interfaz por defecto';
+$strings['launch_type'] = 'Elección de la interfaz en el lanzamiento';
+$strings['EnterConferenceFlash'] = 'Ingresar a la conferencia (con Flash)';
+$strings['EnterConferenceHTML5'] = 'Ingresar a la conferencia (con HTML5)';
+$strings['ParticipantsWillUseSameInterface'] = 'Los participantes usarán la misma interfaz que Ud';
+$strings['SetByDefault'] = 'Lanzamiento con la interfaz por defecto';
+$strings['SetByTeacher'] = 'Elegido por el profesor';
+$strings['SetByStudent'] = 'Elegido por el alumno';
